@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -149,29 +147,38 @@ button { font-family: inherit; cursor: pointer; border: none; }
 .will-change-transform { will-change: transform; }
 
 /* --------------------------------------------------------
-   PERSONALIZAÇÃO DA BARRA DE ROLAGEM (CORRIGIDA)
-   Largura Padrão + Cores Personalizadas (Cinza mais escuro)
+   PERSONALIZAÇÃO DA BARRA DE ROLAGEM
    --------------------------------------------------------
 */
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #888; border-radius: 6px; border: 2px solid #f1f1f1; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+html { scrollbar-color: #888 #f1f1f1; }
 
-/* Trilho (Fundo) */
-::-webkit-scrollbar-track {
-  background: #f1f1f1; /* Fundo cinza bem claro */
+/* ========================================================
+   OTIMIZAÇÕES DE PERFORMANCE (NOVO)
+   ======================================================== */
+
+/* 1. Força a renderização na GPU (Placa de Vídeo) */
+.gpu-layer {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
 }
 
-/* Barra (Polegar) */
-::-webkit-scrollbar-thumb {
-  background: #888; /* Cinza sólido visível */
-  border-radius: 6px; /* Borda arredondada */
-  border: 2px solid #f1f1f1; /* Borda da cor do fundo para dar respiro */
+/* 2. Isola o processo de pintura do navegador (Paint Containment) */
+/* Use isso em seções pesadas que não mudam de tamanho (como o Hero ou Carrossel) */
+.optimize-paint {
+  contain: paint layout;
 }
 
-/* Hover na Barra */
-::-webkit-scrollbar-thumb:hover {
-  background: #555; /* Cinza mais escuro ao passar o mouse */
+/* 3. Renderização de Fontes Otimizada */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Firefox */
-html {
-  scrollbar-color: #888 #f1f1f1; /* Thumb Track */
+/* 4. Renderização rápida para imagens de ruído/pixel */
+.bg-noise {
+  image-rendering: pixelated; 
 }

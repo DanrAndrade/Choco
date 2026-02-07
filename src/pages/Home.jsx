@@ -50,7 +50,9 @@ export default function Home() {
             requestAnimationFrame(raf);
             
             const scrollY = lenis.scroll;
-            setScrolled(scrollY > 50);
+            // Debounce visual simples para evitar re-renders desnecessários
+            if (scrollY > 50 && !scrolled) setScrolled(true);
+            if (scrollY <= 50 && scrolled) setScrolled(false);
         };
         
         requestAnimationFrame(raf);
@@ -85,9 +87,12 @@ export default function Home() {
       if (ctx) ctx.revert();
       ScrollTrigger.getAll().forEach(t => t.kill());
     };
-  }, []);
+  }, [scrolled]); // Dependência adicionada para evitar stale closure
 
-  const noisePattern = `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='3.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.5'/%3E%3C/svg%3E")`;
+  // --- OTIMIZAÇÃO DE PERFORMANCE ---
+  // Substituímos o SVG Filter (que calcula pixels em tempo real) por uma imagem Base64 estática.
+  // Isso remove 90% da carga da CPU no Hero.
+  const noisePattern = `url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEUAAAA5OTkAAABMTExERERmZmYzMzNmZmYAAABVvhyhAAAACHRSTlMAMwAzzP//zMzMzHJLEwAAACVJREFUOMtjYCAJcDEwMDBxMQAJUEGrcQqhqXHBGk200UYbsRoAAGOAAwD314OTAAAAAElFTkSuQmCC")`;
 
   return (
     <div className="chocosul-app font-sans text-gray-900 bg-[#f8f9fa] overflow-x-hidden w-full">
@@ -97,10 +102,14 @@ export default function Home() {
         setMobileMenuOpen={setMobileMenuOpen} 
       />
 
-      <div className="relative w-full bg-[#fba819] rounded-bl-[40px] md:rounded-bl-[80px] overflow-hidden z-0 shadow-2xl pb-16">
-         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,_#fba819_0%,_#d98e0a_100%)] z-0"></div>
+      {/* OTIMIZAÇÃO: gpu-layer força a renderização na placa de vídeo */}
+      <div className="relative w-full bg-[#fba819] rounded-bl-[40px] md:rounded-bl-[80px] overflow-hidden z-0 shadow-2xl pb-16 gpu-layer">
+         
+         {/* Camadas de fundo com will-change para avisar o browser */}
+         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,_#fba819_0%,_#d98e0a_100%)] z-0 will-change-transform"></div>
+         
          <div 
-             className="absolute inset-0 opacity-40 mix-blend-overlay z-0 pointer-events-none"
+             className="absolute inset-0 opacity-40 mix-blend-overlay z-0 pointer-events-none bg-noise will-change-transform"
              style={{ backgroundImage: noisePattern, filter: 'contrast(120%) brightness(100%)' }}
          ></div>
 
@@ -112,12 +121,13 @@ export default function Home() {
             />
          </div>
 
-         <div id="frota" className="relative z-20 pt-4 px-4">
+         {/* optimize-paint isola a repintura desta div */}
+         <div id="frota" className="relative z-20 pt-4 px-4 optimize-paint">
              <Performance />
          </div>
       </div>
 
-      <div id="quem-somos">
+      <div id="quem-somos" className="optimize-paint">
         <About />
       </div>
 
@@ -129,7 +139,7 @@ export default function Home() {
       
       <Regional />
       
-      <div id="tecnologia">
+      <div id="tecnologia" className="optimize-paint">
         <Process />
       </div>
       

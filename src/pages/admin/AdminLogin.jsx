@@ -1,22 +1,20 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Lock, User, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react'; // Importei Eye e EyeOff
+import { ShieldCheck, Lock, User, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 import { Input } from '../../components/ui/FormElements';
 import Button from '../../components/ui/Button';
 import iconLogo from '../../assets/icone.svg';
 
-// Ajuste para HTTPS quando for para produção
+// Ajuste a URL se necessário (Garanta que o XAMPP está rodando!)
 const API_URL = 'http://localhost/chocosul-api/login_admin.php';
 
 export default function AdminLogin() {
   const [formData, setFormData] = useState({ email: '', password: '' });
-  const [showPassword, setShowPassword] = useState(false); // Novo estado
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
   const navigate = useNavigate();
-  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,21 +25,25 @@ export default function AdminLogin() {
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include', // Mantendo a segurança
             body: JSON.stringify(formData)
         });
 
         const data = await response.json();
 
         if (data.success) {
-            login(data.user.email, 'admin-token'); 
-            navigate('/admin/dashboard');
+            // --- CORREÇÃO FUNDAMENTAL AQUI ---
+            // Gravamos o "Crachá" que o App.jsx exige para deixar entrar
+            localStorage.setItem('admin_user', JSON.stringify(data.user));
+            localStorage.setItem('admin_mode', 'true');
+            
+            // Forçamos a entrada
+            window.location.href = '/admin/dashboard';
         } else {
             setError(data.message || "Acesso não autorizado.");
         }
     } catch (err) {
         console.error(err);
-        setError("Erro de conexão com o servidor.");
+        setError("Erro de conexão. Verifique se o XAMPP está ligado.");
     } finally {
         setLoading(false);
     }
@@ -82,7 +84,6 @@ export default function AdminLogin() {
                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                     />
                     
-                    {/* CAMPO DE SENHA CUSTOMIZADO COM TOGGLE */}
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-gray-500 uppercase ml-1">Chave de Acesso</label>
                         <div className="relative group">
@@ -97,7 +98,6 @@ export default function AdminLogin() {
                                 value={formData.password}
                                 onChange={(e) => setFormData({...formData, password: e.target.value})}
                             />
-                            {/* Botão do Olhinho */}
                             <button 
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
@@ -112,12 +112,6 @@ export default function AdminLogin() {
                         {loading ? 'Autenticando...' : 'Entrar'}
                     </Button>
                 </form>
-            </div>
-            
-            <div className="bg-gray-50 py-4 text-center border-t border-gray-100">
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                    Ambiente Seguro v1.0
-                </p>
             </div>
         </div>
     </div>
